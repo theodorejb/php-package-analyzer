@@ -1,0 +1,17 @@
+{
+    "description": "Analyze code from the top Composer packages",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Theodore Brown",
+            "email": "theodorejb@outlook.com"
+        }
+    ],
+    "require": {
+        "nikic/php-parser": "^4.9"
+    },
+    "autoload": {
+        "psr-4": {"theodorejb\\PackageAnalyzer\\": "src/"}
+    }
+}
