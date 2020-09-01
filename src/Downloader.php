@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace theodorejb\PackageAnalyzer;
 
+use Exception;
+use Generator;
+
 class Downloader
 {
+    public const PACKAGIST_POPULAR_URL = 'https://packagist.org/explore/popular.json';
+    public const PACKAGIST_REPO_BASE_URL = 'https://repo.packagist.org/p/';
+
     private string $platform;
 
     public function __construct()
@@ -13,7 +19,7 @@ class Downloader
         $this->platform = explode(' ', php_uname('s'))[0];
     }
 
-    public function getPopularPackages(int $first, int $last): \Generator
+    public function getPopularPackages(int $first, int $last): Generator
     {
         $pageSize = 15;
         $page = intdiv($first, $pageSize);
@@ -21,14 +27,14 @@ class Downloader
 
         while (true) {
             $page++;
-            $url = 'https://packagist.org/explore/popular.json?page=' . $page;
+            $url = self::PACKAGIST_POPULAR_URL . '?' . http_build_query(['page' => $page]);
             $json = json_decode(file_get_contents($url));
 
             foreach ($json->packages as $package) {
                 yield $id => $package->name;
                 $id++;
 
-                if ($id >= $last) {
+                if ($id === $last) {
                     return;
                 }
             }
@@ -44,15 +50,13 @@ class Downloader
             return;
         }
 
-        $url = "https://repo.packagist.org/p/{$lcName}.json";
+        $url = self::PACKAGIST_REPO_BASE_URL . "{$lcName}.json";
         $json = json_decode(file_get_contents($url), true);
         $versions = $json['packages'][$lcName];
 
-        if (isset($versions['dev-master'])) {
-            $version = 'dev-master';
-        } else {
-            $version = array_key_last($versions);
-        }
+        $version = isset($versions['dev-master'])
+            ? 'dev-master'
+            : array_key_last($versions);
 
         $package = $versions[$version];
 
@@ -63,23 +67,21 @@ class Downloader
 
         $dist = $package['dist']['url'];
 
-        echo "Downloading $version...\n";
+        echo "Downloading {$version}...\n";
         $dir = dirname($file);
 
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
         }
 
-        if ($this->platform === 'Windows') {
-            $cmd = "powershell Invoke-WebRequest $dist -OutFile $file";
-        } else {
-            $cmd = "wget $dist -O $file";
-        }
+        $cmd =  $this->platform === 'Windows'
+            ? "powershell Invoke-WebRequest {$dist} -OutFile {$file}"
+            : "wget {$dist} -O {$file}";
 
         exec($cmd, $execOutput, $execRetval);
 
         if ($execRetval !== 0) {
-            throw new \Exception("Failed to download package: " . var_export($execOutput, true));
+            throw new Exception("Failed to download package: " . var_export($execOutput, true));
         }
     }
 }

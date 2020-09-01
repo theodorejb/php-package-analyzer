@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-require 'vendor/autoload.php';
+use theodorejb\PackageAnalyzer\Downloader;
+
+require __DIR__ . '/vendor/autoload.php';
 
 if ($argc < 3) {
     echo "Usage: download.php first-package last-package\n";
-    return;
+    exit(1);
 }
 
-$downloader = new \theodorejb\PackageAnalyzer\Downloader();
+$downloader = new Downloader();
 
-foreach ($downloader->getPopularPackages((int) $argv[1], (int) $argv[2]) as $i => $name) {
-    echo "[$i] $name\n";
-    $downloader->downloadPackage($name, __DIR__ . '/zipped');
+foreach ($downloader->getPopularPackages((int) $argv[1], (int) $argv[2]) as $index => $package) {
+    echo "[{$index}] {$package}\n";
+    $downloader->downloadPackage($package, __DIR__ . '/zipped');
 }
