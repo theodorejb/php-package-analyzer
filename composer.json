@@ -9,6 +9,8 @@
         }
     ],
     "require": {
+        "php": ">=7.4",
+        "ext-json": "*",
         "nikic/php-parser": "^4.9"
     },
     "autoload": {
