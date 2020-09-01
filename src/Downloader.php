@@ -41,10 +41,10 @@ class Downloader
         }
     }
 
-    public function downloadPackage(string $name, string $directory): void
+    public function downloadPackage(string $name, string $downloadDir, string $extractDir): void
     {
         $lcName = strtolower($name);
-        $file = "{$directory}/{$lcName}.zip";
+        $file = "{$downloadDir}/{$lcName}.zip";
 
         if (file_exists($file)) {
             return;
@@ -82,6 +82,16 @@ class Downloader
 
         if ($execRetval !== 0) {
             throw new Exception("Failed to download package: " . var_export($execOutput, true));
+        }
+
+        $cmd = $this->platform === 'Windows'
+            ? "7z x {$file} -o{$extractDir} -ir!*.php" // only extract PHP files
+            : "unzip {$file} -d {$extractDir}";
+
+        exec($cmd, $execOutput, $execRetval);
+
+        if ($execRetval !== 0) {
+            throw new Exception("Failed to extract package: " . var_export($execOutput, true));
         }
     }
 }
